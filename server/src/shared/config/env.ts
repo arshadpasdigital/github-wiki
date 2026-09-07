@@ -32,7 +32,11 @@ const envSchema = z.object({
 	MEM0_API_KEY: z.string().trim().min(1, "MEM0_API_KEY is required"),
 	OPENAI_API_KEY: z.string().trim().min(1, "OPENAI_API_KEY is required"),
 	ORIGIN: z.string().trim().min(1, "ORIGIN is required"),
-	REDIS_URL:z.string().trim().min(1,"REDIS_URL is required")
+	REDIS_URL: z.string().trim().min(1, "REDIS_URL is required"),
+	ACTIVITY_BUFFER_KEY: z.string().trim().min(1).default("activity:buffer"),
+	ACTIVITY_BUFFER_TTL_SECONDS: z.coerce.number().int().min(60).default(3600),
+	ACTIVITY_FLUSH_INTERVAL_MS: z.coerce.number().int().min(1000).default(30000),
+	ACTIVITY_MAX_BATCH: z.coerce.number().int().min(1).default(500),
 	// GITHUB_APP_ID: z.string().trim().min(1, "GITHUB_APP_ID is required"),
 	// GITHUB_PRIVATE_KEY: z
 	// 	.string()
