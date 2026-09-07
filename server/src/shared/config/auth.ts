@@ -3,6 +3,7 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { MongoClient } from "mongodb";
 import { env } from "@/shared/config/env";
 import { UserProfile } from "@/shared/models/user.model";
+import { openAPI } from "better-auth/plugins";
 
 const client = new MongoClient(env.MONGODB_URI);
 const db = client.db();
@@ -34,4 +35,9 @@ export const auth = betterAuth({
 			},
 		},
 	},
+	plugins: [
+    openAPI({
+      disableDefaultReference: true, // we'll fold this into our own unified docs page instead of a separate one
+    }),
+  ]
 });

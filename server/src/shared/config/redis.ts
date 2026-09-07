@@ -1,20 +1,40 @@
-import Redis from 'ioredis'
-import { env } from './env';
+import Redis from "ioredis";
+import { env } from "./env";
 
-class RedisService{
-    public static redisInstance:Redis
-    constructor(){
+class RedisService {
+    private static instance: Redis | null = null;
 
+    private constructor() {}
+
+    public static getInstance(): Redis {
+        if (!RedisService.instance) {
+            RedisService.instance = new Redis(env.REDIS_URL);
+        }
+
+        return RedisService.instance;
     }
 
-    public static getInstance(){
-        return this.getInstance;
+    public static connected(): boolean {
+        return RedisService.instance?.status === "ready";
     }
 
-    public static async connection(){
-        const instance = this.redisInstance;
-        if(!instance){
-            this.redisInstance = new Redis(env.REDIS_URL)
+    public static closed(): boolean {
+        const status = RedisService.instance?.status;
+
+        return status === undefined || status === "close" || status === "end";
+    }
+
+    public static async ping(): Promise<boolean> {
+        try {
+            return (await RedisService.getInstance().ping()) === "PONG";
+        } catch {
+            return false;
         }
     }
 }
+
+export { RedisService };
+
+export const getRedisClient = (): Promise<Redis> => {
+    return Promise.resolve(RedisService.getInstance());
+};
