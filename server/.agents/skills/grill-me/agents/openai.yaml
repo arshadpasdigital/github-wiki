@@ -1,5 +1,6 @@
 interface:
   display_name: "Grill Me"
   short_description: "Sharpen a plan through interview"
+  default_prompt: "Use $grill-me to interview me about the GitHub Wiki API. Focus on the Express app and its /health endpoint plus the Better Auth-protected /api/v1/repos, /api/v1/users, and /api/v1/activities routes. Probe repository syncing, the user profile/logout/update flows, recent-activity limits, request validation, unauthorized and missing-GitHub-account cases, response contracts, and operational edge cases. Ask one question at a time and keep drilling until the plan is concrete, testable, and implementation-ready."
 policy:
   allow_implicit_invocation: false

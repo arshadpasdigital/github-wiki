@@ -19,6 +19,8 @@ import { serve } from "inngest/express";
 import { inngest } from "@/inngest/index";
 import { functions } from "@/inngest/functions/index";
 import {createScalarMiddleware} from "@/shared/middlewares/create-scalar-middleware";
+import path from "node:path";
+import { cwd } from "node:process";
 
 
 const app = express();
@@ -56,6 +58,7 @@ app.use(
   createScalarMiddleware(),
 )
 
+
 app.use("/api/v1/tasks", taskRouter);
 app.use("/api/v1/repos", repoRouter);
 app.use("/api/v1/users", userRouter);
@@ -75,6 +78,10 @@ app.get("/health", async (req: Request, res: Response, next: NextFunction) => {
 		.status(200)
 		.json(ApiResponse.success(healthcheck, 200, "health of project"));
 });
+app.get('/openapi.yml', (req, res) => {
+  res.sendFile(path.join(cwd(), 'openapi.yml'));
+});
+app.use(errorMiddleware);
 app.use((req: Request, res: Response) => {
 	res
 		.status(404)
@@ -86,6 +93,5 @@ app.use((req: Request, res: Response) => {
 			),
 		);
 });
-app.use(errorMiddleware);
 
 export { app };

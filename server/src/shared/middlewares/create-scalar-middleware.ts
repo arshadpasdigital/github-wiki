@@ -4,7 +4,7 @@ import { apiReference } from '@scalar/express-api-reference';
 function createScalarMiddleware(): RequestHandler {
   return apiReference({
     sources: [
-      { title: 'Task Board API', url: '/openapi.yml', default: true },
+      { title: 'Github Wiki', url: '/openapi.yml', default: true },
       { title: 'Auth (Better Auth)', url: '/api/auth/open-api/generate-schema' },
     ],
     layout: 'modern',

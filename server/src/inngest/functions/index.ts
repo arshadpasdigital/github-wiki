@@ -1,3 +1,3 @@
+import { indexRepo } from "./indexRepo";
 
-
-export const functions =[];
+export const functions =[indexRepo];

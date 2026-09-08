@@ -1,1 +1,2 @@
 - Avoids Inngest for real-time/event delivery; leans toward Redis (pub/sub or buffering) for live updates and high-velocity events. Confidence: 0.7
+- Uses `bun` as the package manager and task runner, invoking tools via `bun x <tool>` (e.g., `bun x @redocly/cli lint`). Confidence: 0.8
