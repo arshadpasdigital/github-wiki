@@ -1,0 +1,1 @@
+- Uses `@` prefix to reference project-relative file paths in requests (e.g., `@openapi.yml`, `@src/app.ts`). Confidence: 0.8

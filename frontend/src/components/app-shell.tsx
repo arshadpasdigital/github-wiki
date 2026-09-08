@@ -29,7 +29,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { useUiStore } from "@/stores/ui.store"
-import { Button } from "./ui/button"
 import { useLoginMutation } from "@/features/auth/api/auth.mutation"
 import { useUserStore } from "@/stores/user.store"
 
@@ -266,9 +265,9 @@ export function AppShell({
               <span className="notification-dot" />
             </button>
             <div className="header-user">
-              <span className="user-initials">PA</span>
+              <span className="user-initials">{userDetail?.githubUsername?.split(' ').map(word => word[0]).join('')}</span>
               <span className="header-user-copy">
-                <strong>pasdigital</strong>
+                <strong>{userDetail?.githubUsername}</strong>
                 <small>GITHUB</small>
               </span>
             </div>

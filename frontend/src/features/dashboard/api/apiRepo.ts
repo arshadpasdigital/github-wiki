@@ -1,3 +1,4 @@
+// import type { paths } from "@/api/schema"
 import { getResponseData, type ApiResponse } from "@/config/function"
 import { apiClient } from "@/lib/api-client"
 
@@ -26,6 +27,11 @@ export type Repository = {
   updatedAt?: string
 }
 
+// type MoveTaskEnvelope = paths["/api/move"]["post"]["responses"]["200"]["content"]["application/json"];
+// export const moveTask = async (body: MoveTaskBody) => {
+//   const { data: envelope } = await axiosInstance.post<MoveTaskEnvelope>("/api/move", body);
+//   return envelope.data; // the actual MoveTaskData — typed, not `any`
+// };
 
 export const repositoryApi = {
   async list() {

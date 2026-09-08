@@ -1,26 +1,63 @@
 import { fetchRepo } from "@/shared/config/github";
 import { inngest } from "..";
 import { chunkFiles } from "@/rag/chunking";
-import { VectorStore } from "@/rag/vectorStorage";
+import QdrantVectorStore from "@/shared/config/qdrant";
+import { OpenAIEmbeddings } from "@langchain/openai";
+import { IndexingStatus, RepoModel } from "@/shared/models/repos.model";
+
+const BATCH_SIZE = 25;
 
 export const indexRepo = inngest.createFunction({
-    id:"rag-indexing",triggers:[{event:"rag-indexing"}],
-}, async({event,step})=>{
-    const {repo,token, owner} = event.data;
-    const repoName = repo.replace(/\.git$/,"");
+    id: "handle-repo-rag-indexing", triggers: [{ event: "repo/rag-indexing" }],
+}, async ({ event, step }) => {
+    const { repo, token, owner, githubRepoId } = event.data;
+    const repoName = repo.replace(/\.git$/, "");
     const repoKey = `${owner}:${repoName}`;
 
-    const files = await step.run("get-repo-files",async ()=>{
-        return fetchRepo(token,owner,repoName);
+    const { files, sha } = await step.run("get-repo-files", async () => {
+        return fetchRepo(token, owner, repoName);
     })
 
-    const document = await step.run("chunk-files",async()=>{
-        return chunkFiles(files,repo);
+    await step.run("init-progress", async () => {
+        await RepoModel.findByIdAndUpdate(githubRepoId, {
+            $set: {
+                "indexingProgress.totalFiles": files.length,
+                "indexingProgress.filesProcessed": 0,
+            },
+        });
+    });
+
+
+
+    const totalBatches = Math.ceil(files.length / BATCH_SIZE);
+
+    for (let i = 0; i < totalBatches; i++) {
+        const batch = files.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+        const filesProcessed = Math.min(files.length, (i + 1) * BATCH_SIZE);
+
+        await step.run(`process-batch-${i}`, async () => {
+            const store = new QdrantVectorStore(
+                new OpenAIEmbeddings({ model: "text-embedding-3-large" }),
+                repoKey,
+                3072,
+            );
+            const vectorStore = await store.Connected();
+            const documents = await chunkFiles(batch, repoName);
+            await vectorStore.addDocuments(documents);
+
+            await RepoModel.findByIdAndUpdate(githubRepoId, {
+                $set: { "indexingProgress.filesProcessed": filesProcessed },
+            });
+        });
+    }
+
+    await RepoModel.findByIdAndUpdate(githubRepoId, {
+        $set: {
+            indexingStatus: IndexingStatus.Ready,
+            lastIndexedAt: Date.now(),
+            lastIndexedCommitSha: sha,
+        }
     })
 
-    await step.run("save-to-vectorDB",async()=>{
-        await VectorStore.save(document,'abcd')
-    })
-
-    return {repo:repoKey, fileCount:files.length, chunkSize:document.length}
+    return { repo: repoKey, fileCount: files.length }
 })

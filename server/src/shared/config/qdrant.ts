@@ -8,7 +8,7 @@ class VectorStore {
   constructor(
     private readonly embeddings: Embeddings,
     private readonly collectionName: string,
-    private readonly vectorSize: number = 1536, // must match your embedding model's output dimension
+    private readonly vectorSize: number = 3072, // text-embedding-3-large outputs 3072 dimensions
   ) {}
 
   async Connected(): Promise<QdrantVectorStore> {

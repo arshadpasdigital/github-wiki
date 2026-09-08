@@ -5,21 +5,662 @@ info:
   version: 0.0.1
 
 servers:
-  - url: http://localhost:3000/v1
-    description: building server it is used during build
+  - url: http://localhost:3000/api/v1
+    description: API v1 base URL
+
+tags:
+  - name: Repos
+    description: GitHub repository operations
+  - name: Tasks
+    description: Task CRUD operations
+  - name: Activities
+    description: Recent activity feed
+  - name: Users
+    description: User profile operations
+  - name: Health
+    description: Service health check
 
 paths:
-  /users:
+  /repos:
     get:
-      summary: Returns a list of users.
-      description: Optional extended description in CommonMark or HTML.
+      operationId: getRepos
+      summary: Returns a list of repos.
+      description: Returns the list of repositories stored in the database.
+      tags: [Repos]
+      security:
+        - betterAuthSession: []
       responses:
-        "200": # status code
-          description: A JSON array of user names
+        "200":
+          description: A list of repositories.
           content:
             application/json:
               schema:
-                type: array
-                items:
+                $ref: '#/components/schemas/RepoListResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /repos/fetch-repos:
+    get:
+      operationId: fetchGithubRepos
+      summary: Fetch GitHub repos after login.
+      description: >-
+        Fetches all GitHub repositories for the authenticated user's linked GitHub
+        account and stores them in the database.
+      tags: [Repos]
+      security:
+        - betterAuthSession: []
+      responses:
+        "200":
+          description: The fetched and stored repositories.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepoListResponse'
+        "400":
+          description: GitHub account is not linked, or the user profile is missing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /tasks:
+    get:
+      operationId: getTasks
+      summary: Returns a list of tasks.
+      description: Returns all tasks sorted by creation date descending.
+      tags: [Tasks]
+      security:
+        - betterAuthSession: []
+      responses:
+        "200":
+          description: A list of tasks.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createTask
+      summary: Create a task.
+      description: >-
+        Creates a new task. Note: the task router does not currently enforce
+        authentication middleware even though it is documented as requiring a session.
+      tags: [Tasks]
+      security:
+        - betterAuthSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskInput'
+      responses:
+        "201":
+          description: The created task.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /tasks/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Task identifier (MongoDB ObjectId).
+        schema:
+          type: string
+    get:
+      operationId: getTaskById
+      summary: Get a task by id.
+      description: Returns a single task by its id.
+      tags: [Tasks]
+      security:
+        - betterAuthSession: []
+      responses:
+        "200":
+          description: The requested task.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        "400":
+          description: Invalid task id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: Task not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      operationId: updateTask
+      summary: Update a task.
+      description: >-
+        Partially updates a task. At least one field is required.
+        Note: the task router does not currently enforce authentication middleware.
+      tags: [Tasks]
+      security:
+        - betterAuthSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskInput'
+      responses:
+        "200":
+          description: The updated task.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: Task not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      operationId: deleteTask
+      summary: Delete a task.
+      description: Deletes a task by id and returns the deleted document.
+      tags: [Tasks]
+      security:
+        - betterAuthSession: []
+      responses:
+        "200":
+          description: The deleted task.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        "400":
+          description: Invalid task id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: Task not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /activities:
+    get:
+      operationId: getRecentActivities
+      summary: Get recent activities.
+      description: Returns recent activities for the authenticated user.
+      tags: [Activities]
+      security:
+        - betterAuthSession: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of activities to return (1-200).
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        "200":
+          description: A list of recent activities.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityListResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/logout:
+    post:
+      operationId: logout
+      summary: Log out the current user.
+      description: Signs out the current session via Better Auth.
+      tags: [Users]
+      security:
+        - betterAuthSession: []
+      responses:
+        "200":
+          description: Logged out successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/me:
+    get:
+      operationId: getMe
+      summary: Get the current user profile.
+      description: Returns the user profile for the authenticated user.
+      tags: [Users]
+      security:
+        - betterAuthSession: []
+      responses:
+        "200":
+          description: The current user profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: User profile not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/update:
+    patch:
+      operationId: updateMe
+      summary: Update the current user profile.
+      description: Partially updates the authenticated user's profile. At least one field is required.
+      tags: [Users]
+      security:
+        - betterAuthSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserInput'
+      responses:
+        "200":
+          description: The updated user profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: User profile not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Service health check.
+      description: Returns database connection status and process uptime.
+      tags: [Health]
+      security: []
+      servers:
+        - url: http://localhost:3000
+          description: Root server (health check lives outside /api/v1)
+      responses:
+        "200":
+          description: Health check result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      required: [success, message, statusCode, timestamp]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        statusCode:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        data: {}
+
+    Task:
+      type: object
+      required: [title, completed, createdAt, updatedAt]
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        completed:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateTaskInput:
+      type: object
+      required: [title]
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 2000
+        completed:
+          type: boolean
+          default: false
+
+    UpdateTaskInput:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 120
+        description:
+          type: string
+          maxLength: 2000
+        completed:
+          type: boolean
+
+    IndexingProgress:
+      type: object
+      properties:
+        filesProcessed:
+          type: integer
+          default: 0
+        totalFiles:
+          type: integer
+          default: 0
+
+    Repo:
+      type: object
+      required:
+        - userId
+        - githubRepoId
+        - fullName
+        - defaultBranch
+        - private
+        - stars
+        - indexingStatus
+        - indexingProgress
+        - isOutdated
+        - isActive
+      properties:
+        _id:
+          type: string
+        userId:
+          type: string
+        githubRepoId:
+          type: integer
+        fullName:
+          type: string
+        defaultBranch:
+          type: string
+        private:
+          type: boolean
+        language:
+          type: string
+          nullable: true
+        stars:
+          type: integer
+        indexingStatus:
+          type: string
+          enum: [not_indexed, indexing, ready, failed]
+        indexingProgress:
+          $ref: '#/components/schemas/IndexingProgress'
+        lastIndexedCommitSha:
+          type: string
+          nullable: true
+        lastIndexedAt:
+          type: string
+          format: date-time
+          nullable: true
+        isOutdated:
+          type: boolean
+        webhookId:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        deactivatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Activity:
+      type: object
+      required: [userId, repository, action, tone]
+      properties:
+        _id:
+          type: string
+        userId:
+          type: string
+        repoId:
+          type: string
+          nullable: true
+        repository:
+          type: string
+        action:
+          type: string
+        detail:
+          type: string
+          nullable: true
+        tone:
+          type: string
+          enum: [green, cyan, amber, red, muted]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    IndexedRepo:
+      type: object
+      required: [repoId, fullName, defaultBranch, wikiEnabled, status, vectorNamespace]
+      properties:
+        repoId:
+          type: integer
+        fullName:
+          type: string
+        defaultBranch:
+          type: string
+        wikiEnabled:
+          type: boolean
+        status:
+          type: string
+          enum: [pending, indexing, indexed, failed]
+        vectorNamespace:
+          type: string
+        lastIndexedAt:
+          type: string
+          format: date-time
+
+    UserProfile:
+      type: object
+      required: [authUserId, githubUsername, email, installationId, indexedRepos, createdAt, updatedAt]
+      properties:
+        _id:
+          type: string
+        authUserId:
+          type: string
+        githubUsername:
+          type: string
+        email:
+          type: string
+          format: email
+        avatarUrl:
+          type: string
+        indexedRepos:
+          type: array
+          items:
+            $ref: '#/components/schemas/IndexedRepo'
+        installationId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdateUserInput:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        githubUsername:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        installationId:
+          type: integer
+          minimum: 1
+
+    ErrorResponse:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        errors: {}
+
+    TaskResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/Task'
+
+    TaskListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Task'
+
+    RepoListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Repo'
+
+    ActivityListResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Activity'
+
+    UserProfileResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/UserProfile'
+
+    LogoutResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: true
+
+    HealthResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [databaseStatus, uptime, message, timestamp]
+              properties:
+                databaseStatus:
                   type: string
-      
+                  enum: [disconnected, connected, connecting, disconnecting]
+                uptime:
+                  type: number
+                message:
+                  type: string
+                timestamp:
+                  type: integer
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid session.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ValidationError:
+      description: Request validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  securitySchemes:
+    betterAuthSession:
+      type: apiKey
+      in: cookie
+      name: better-auth.session_token

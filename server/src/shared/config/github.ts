@@ -1,19 +1,18 @@
-import { App } from "@octokit/app";
+
 import { Octokit } from "octokit";
-import { env } from "../config/env";
 
 export interface IFiles{
   path:string,
   content:string
 }
 
-const SKIP_DIR=[''];
-const SKIP_FILES = new Set([]);
-const SKIP_EXENSION=new Set([])
+const SKIP_DIR: string[] = [];
+const SKIP_FILES = new Set<string>();
+const SKIP_EXENSION = new Set<string>();
 
 export const shouldSkipFiles = (path:string,size?:number)=>{
   const parts = path.split("/");
-  const fileName=parts.at(-1);
+  const fileName = parts.at(-1) ?? "";
 
   if(parts.some((part)=>SKIP_DIR.includes(part))) return true;
   if(SKIP_FILES.has(fileName)) return true;
@@ -21,9 +20,9 @@ export const shouldSkipFiles = (path:string,size?:number)=>{
   const ext = fileName?.includes(".") ? fileName.slice(fileName.lastIndexOf(".")+1).toLowerCase():"";
 
   if(SKIP_EXENSION.has(ext)) return true;
-  if(fileName?.startsWith(".min.js")) return true;
+  if(fileName?.endsWith(".min.js")) return true;
 
-  return true;
+  return false;
 }
 
 export const parseRepo =(input:string)=>{
@@ -63,11 +62,17 @@ export const fetchRepo = async (token:string, owner:string,repo:string)=>{
 
         files.push({
           path:item.path,
-          content:Buffer.from(blob.content,"base64").toString("base64"),
+          content:Buffer.from(blob.content,"base64").toString("utf8"),
         })
 
       if(files.length >= 200) break;
     }
 
-    return files
+    const { data: refData } = await octokit.rest.git.getRef({
+      owner,
+      repo,
+      ref: `heads/${repoInfo.default_branch}`,
+    });
+
+    return {files, sha: refData.object.sha}
 }

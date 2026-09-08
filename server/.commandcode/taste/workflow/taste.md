@@ -1,3 +1,6 @@
 - Prefers live UI updates for activity/event data, but considers ~10s–1min of lag acceptable ("live" = up to a minute stale); polling-based updates are fine within that tolerance. Confidence: 0.8
 - Prefers to implement code changes himself rather than having the assistant implement them; wants step-by-step instructions/guides to follow instead. Confidence: 0.9
 - Wants implementation guides written as markdown files under a `.commandcode/<feature>/` folder (e.g. `.commandcode/activity-logger/README.md`). Confidence: 0.8
+- Prefers generating OpenAPI specifications by deriving them from actual source code (app.ts mount points, route definitions, controllers, models, Zod validation schemas) rather than writing specs from scratch; explicitly provides source files as the basis. Confidence: 0.75
+- Approves a plan-and-confirm loop: the assistant proposes a plan, asks for scope/approach confirmation, and the user approves ("yes update it") before execution proceeds. Confidence: 0.85
+- Open to comprehensive scope expansion when proposed: approved including `users` routes and `/health` beyond the originally-requested repo/task/activity routes when the assistant flagged them as addable. Confidence: 0.75
