@@ -10,5 +10,6 @@ const repoController = controller.repoController
 
 router.get("/",authMiddleware, repoController.getRepos);
 router.get("/fetch-repos",authMiddleware, repoController.fetchAllRepos);
+router.post("/:repoId/indexing",authMiddleware, repoController.indexingRepo)
 
 export default router;

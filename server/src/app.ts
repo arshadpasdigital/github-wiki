@@ -78,9 +78,11 @@ app.get("/health", async (req: Request, res: Response, next: NextFunction) => {
 		.status(200)
 		.json(ApiResponse.success(healthcheck, 200, "health of project"));
 });
+
 app.get('/openapi.yml', (req, res) => {
   res.sendFile(path.join(cwd(), 'openapi.yml'));
 });
+
 app.use(errorMiddleware);
 app.use((req: Request, res: Response) => {
 	res

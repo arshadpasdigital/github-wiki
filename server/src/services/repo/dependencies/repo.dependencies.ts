@@ -3,6 +3,7 @@ import { RepoService } from "../services/repo.service";
 import { RepoController } from "../controllers/repo.controller";
 import { auth } from "@/shared/config/auth";
 import { UserRepository } from "../repositories/user.repository";
+import { inngest } from "@/inngest";
 
 /**
  * Dependency Injection Container for the Task module.
@@ -23,6 +24,7 @@ class Container {
 				repositories.repoRepository,
 				auth,
 				repositories.userRepository,
+				inngest
 			),
 		};
 

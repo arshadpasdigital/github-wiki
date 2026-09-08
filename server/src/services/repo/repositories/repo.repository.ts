@@ -4,8 +4,9 @@ import type { CreateTaskInput, UpdateTaskInput } from "@/services/task/validatio
 export interface RepoRepositoryContract {
     findAll(): Promise<RepoDocument[]>;
     findById(id: string): Promise<RepoDocument | null>;
+    findOne(filterObject: Record<string, any>): Promise<RepoDocument | null>;
     create(input: CreateTaskInput): Promise<RepoDocument>;
-    updateById(id: string, input: UpdateTaskInput): Promise<RepoDocument | null>;
+    updateById(id: string, input: any): Promise<RepoDocument | null>;
     deleteById(id: string): Promise<RepoDocument | null>;
     bulkInsert(data:IRepo[]):Promise<RepoDocument[]>
 }
@@ -21,6 +22,10 @@ export class RepoRepository implements RepoRepositoryContract {
 
     async create(input: CreateTaskInput): Promise<RepoDocument> {
         return RepoModel.create(input);
+    }
+
+    async findOne(filterObject: Record<string, any>): Promise<RepoDocument | null> {
+        return RepoModel.findOne(filterObject).exec();
     }
 
     async updateById(

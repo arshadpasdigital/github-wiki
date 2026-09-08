@@ -1,13 +1,11 @@
+import type { Request,Response } from "express";
 import asyncHandler from "@/shared/middlewares/async-handler";
 import AppError from "@/shared/utils/app-error";
-import {
-	createTaskSchema,
-	updateTaskSchema,
-} from "@/services/task/validation/task.validation";
 import { ApiResponse } from "@/shared/utils/api-response";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "@/shared/config/auth";
 import type { RepoService } from "../services/repo.service";
+
 
 const getTaskId = (value: string | string[] | undefined): string => {
 	if (typeof value !== "string" || value.length === 0) {
@@ -47,30 +45,13 @@ export class RepoController {
 		res.status(200).json(ApiResponse.success(repos, 200, "get all repos"));
 	});
 
-	readonly getTaskById = asyncHandler(async (req, res) => {
-		const task = await this.repoService.getTaskById(getTaskId(req.params.id));
-		res.status(200).json(ApiResponse.success(task, 200, "get particular task"));
-	});
+	readonly indexingRepo = asyncHandler(async(req:Request,res:Response)=>{
+		const {fullName} = req.body;
+		const repoId = req.params.repoId as string;
+		const accountId = req.session.session.accountId;
+		const userId = req.user.userId;
 
-	readonly createTask = asyncHandler(async (req, res) => {
-		const input = createTaskSchema.parse(req.body);
-		const task = await this.repoService.createTask(input);
-		res.status(201).json(ApiResponse.success(task, 200, "create a task"));
-	});
-
-	readonly updateTask = asyncHandler(async (req, res) => {
-		const input = updateTaskSchema.parse(req.body);
-		const task = await this.repoService.updateTask(
-			getTaskId(req.params.id),
-			input,
-		);
-		res.status(200).json(ApiResponse.success(task, 200, "update the Task"));
-	});
-
-	readonly deleteTask = asyncHandler(async (req, res) => {
-		const task = await this.repoService.deleteTask(getTaskId(req.params.id));
-		res
-			.status(200)
-			.json(ApiResponse.success(task, 200, "task deleted successfully"));
-	});
+		await this.repoService.indexingRepo(fullName,repoId,userId,accountId);
+		res.status(200).json(ApiResponse.success(null,200,"Repo indexing start"))
+	})
 }

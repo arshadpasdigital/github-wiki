@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 import AppError from "@/shared/utils/app-error";
 import {
 	type CreateTaskInput,
@@ -19,16 +19,36 @@ import {
 	UserRepository,
 	type UserRepositoryContract,
 } from "../repositories/user.repository";
+import type { Inngest } from "inngest";
 
 export class RepoService {
 	constructor(
 		private readonly repoRepository: RepoRepositoryContract = new RepoRepository(),
 		private readonly authRepo: typeof auth,
 		private readonly userRepository: UserRepositoryContract = new UserRepository(),
+		private readonly inngest: Inngest
 	) {}
 
 	async getAllRepos(): Promise<RepoDocument[]> {
 		return this.repoRepository.findAll();
+	}
+
+
+	private validateId(id: string): void {
+		if (!Types.ObjectId.isValid(id)) {
+			throw new AppError("Invalid task id", 400);
+		}
+	}
+
+	async fetchAllRepo(accessToken: string) {
+		const octokit = new Octokit({
+			auth: accessToken,
+		});
+
+		return octokit.paginate(octokit.rest.repos.listForAuthenticatedUser, {
+			visibility: "all",
+			per_page: 100,
+		});
 	}
 
 	async createAllRepo(
@@ -76,57 +96,34 @@ export class RepoService {
 		return this.repoRepository.bulkInsert(allInsertRepo);
 	}
 
-	async getTaskById(id: string): Promise<RepoDocument> {
-		this.validateId(id);
-
-		const task = await this.repoRepository.findById(id);
-		if (!task) {
-			throw new AppError("Task not found", 404);
+	async indexingRepo(fullName:string,repoId:string,userId:string, accountId:string){
+		const repoData = await this.repoRepository.findOne({_id:new mongoose.Types.ObjectId(repoId),fullName,userId:new mongoose.Types.ObjectId(userId)});
+		if(!repoData || repoData == null){
+			throw new Error('Repo not found');
 		}
-
-		return task;
-	}
-
-	async createTask(input: CreateTaskInput): Promise<RepoDocument> {
-		return this.repoRepository.create(input);
-	}
-
-	async updateTask(id: string, input: UpdateTaskInput): Promise<RepoDocument> {
-		this.validateId(id);
-
-		const task = await this.repoRepository.updateById(id, input);
-		if (!task) {
-			throw new AppError("Task not found", 404);
-		}
-
-		return task;
-	}
-
-	async deleteTask(id: string): Promise<RepoDocument> {
-		this.validateId(id);
-
-		const task = await this.repoRepository.deleteById(id);
-		if (!task) {
-			throw new AppError("Task not found", 404);
-		}
-
-		return task;
-	}
-
-	private validateId(id: string): void {
-		if (!Types.ObjectId.isValid(id)) {
-			throw new AppError("Invalid task id", 400);
-		}
-	}
-
-	private async fetchAllRepo(accessToken: string) {
-		const octokit = new Octokit({
-			auth: accessToken,
+		const { accessToken } = await this.authRepo.api.getAccessToken({
+			body: { accountId, userId },
 		});
 
-		return octokit.paginate(octokit.rest.repos.listForAuthenticatedUser, {
-			visibility: "all",
-			per_page: 100,
-		});
+		const repoDetail = fullName.split("/");
+
+		await this.repoRepository.updateById(repoId,{
+			$set:{
+				indexingStatus:IndexingStatus.Indexing,
+			}
+		})
+
+		await this.inngest.send({
+			name:"repo/rag-indexing",
+			data:{
+				repo:repoDetail[1],
+				token:accessToken, 
+				owner:repoDetail[0],
+				githubRepoId:repoId
+			},
+		})
+
+		return true
+
 	}
 }
