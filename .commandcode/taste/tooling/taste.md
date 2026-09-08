@@ -8,3 +8,4 @@
 - Uses Inngest for background/durable job orchestration (e.g., the repo indexing pipeline). Confidence: 0.7
 - Uses LangChain (@langchain/openai) with OpenAI's text-embedding-3-large for chunking and embeddings. Confidence: 0.7
 - Uses Bun as the package manager/runtime (runs `bunx tsc --noEmit` for typechecking). Confidence: 0.6
+- Uses Zod schemas for request/input validation in backend services (with `.strict()` and `.refine()`). Confidence: 0.6

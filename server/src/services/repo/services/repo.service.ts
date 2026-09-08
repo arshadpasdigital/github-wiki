@@ -1,10 +1,6 @@
 import mongoose, { Types } from "mongoose";
 import AppError from "@/shared/utils/app-error";
 import {
-	type CreateTaskInput,
-	type UpdateTaskInput,
-} from "../validation/task.validation";
-import {
 	RepoRepository,
 	type RepoRepositoryContract,
 } from "../repositories/repo.repository";
@@ -46,7 +42,7 @@ export class RepoService {
 		});
 
 		return octokit.paginate(octokit.rest.repos.listForAuthenticatedUser, {
-			visibility: "all",
+			visibility: "public",
 			per_page: 100,
 		});
 	}

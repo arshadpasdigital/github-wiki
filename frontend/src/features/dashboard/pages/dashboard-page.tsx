@@ -92,7 +92,7 @@ function RepoAction({
         params={{ repoId: repo.id }}
         className={`${tableActionClass} border-[#2d625e] text-[var(--terminal-green)] no-underline`}
       >
-        OPEN CHAT <span className="pl-[6px] text-[13px]">↗</span>
+        OPEN REPO <span className="pl-[6px] text-[13px]">↗</span>
       </Link>
     )
   if (repo.status === "indexing")

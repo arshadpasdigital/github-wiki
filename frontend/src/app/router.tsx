@@ -118,14 +118,23 @@ const repoRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: "/repo/$repoId",
   component: lazyRouteComponent(
-    () => import("@/features/repos/pages/repo-chat-page"),
-    "RepoChatPage"
+    () => import("@/features/repos/pages/repo-overview-page"),
+    "RepoOverviewPage"
+  ),
+})
+
+const repoSessionsRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: "/repo/$repoId/sessions",
+  component: lazyRouteComponent(
+    () => import("@/features/repos/pages/repo-sessions-page"),
+    "RepoSessionsPage"
   ),
 })
 
 const repoSessionRoute = createRoute({
   getParentRoute: () => protectedRoute,
-  path: "/repo/$repoId/session/$sessionId",
+  path: "/repo/$repoId/sessions/$sessionId",
   component: lazyRouteComponent(
     () => import("@/features/repos/pages/repo-session-page"),
     "RepoSessionPage"
@@ -151,6 +160,7 @@ const routeTree = rootRoute.addChildren([
       activityRoute,
     ]),
     repoRoute,
+    repoSessionsRoute,
     repoSessionRoute,
     settingsRoute,
   ]),

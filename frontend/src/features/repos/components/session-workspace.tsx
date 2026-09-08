@@ -1,25 +1,22 @@
 import { useState } from "react"
 import {
-  Activity,
   ArrowDown,
-  BookOpen,
+  Boxes,
   FileCode2,
   FolderOpen,
+  FolderTree,
   GitBranch,
-  Grid2X2,
-  MessageSquareText,
   MoreHorizontal,
+  Network,
   PanelRightClose,
-  Pin,
-  Plus,
+  Search,
   Send,
-  Settings2,
   Sparkles,
   Square,
   X,
 } from "lucide-react"
 
-import { Link, useLocation, useParams } from "@tanstack/react-router"
+import { RepoChromeHeader } from "./repo-chrome-header"
 
 type Message = {
   id: string
@@ -60,125 +57,24 @@ const initialMessages: Message[] = [
   },
 ]
 
-const sessions = [
-  { id: "s1", title: "trace the auth boundary", time: "14:26", pinned: true },
-  {
-    id: "s2",
-    title: "where are retries handled?",
-    time: "yesterday",
-    pinned: false,
-  },
-  { id: "s3", title: "map the webhook flow", time: "yesterday", pinned: false },
-  {
-    id: "s4",
-    title: "session invalidation notes",
-    time: "12 Aug",
-    pinned: false,
-  },
+const folderTree = [
+  { name: "src/", depth: 0, type: "dir" as const },
+  { name: "auth/", depth: 1, type: "dir" as const },
+  { name: "github-callback.ts", depth: 2, type: "file" as const },
+  { name: "middleware/", depth: 1, type: "dir" as const },
+  { name: "session-context.ts", depth: 2, type: "file" as const },
+  { name: "context/", depth: 1, type: "dir" as const },
+  { name: "request-context.ts", depth: 2, type: "file" as const },
+  { name: "index.ts", depth: 1, type: "file" as const },
 ]
 
-const appNavLinks = [
-  { label: "Overview", to: "/dashboard", icon: Grid2X2 },
-  { label: "Repositories", to: "/dashboard/repository", icon: BookOpen },
-  { label: "Activity", to: "/dashboard/activity", icon: Activity },
-  { label: "Settings", to: "/settings", icon: Settings2 },
-] as const
+const repoTools = [
+  { label: "SEARCH INDEX", icon: Search },
+  { label: "CODE GRAPH", icon: Network },
+  { label: "SYMBOLS", icon: Boxes },
+]
 
-function ChatChromeHeader({
-  repoId,
-}: {
-  repoId: string
-}) {
-  const location = useLocation()
-
-  return (
-    <header className="flex h-[68px] shrink-0 items-center justify-between border-b border-[var(--terminal-rule)] bg-[#070a0c] px-[18px] max-[900px]:flex-wrap max-[900px]:h-auto max-[900px]:gap-y-2 max-[900px]:py-2">
-      <div className="flex min-w-0 items-center gap-6">
-        <Link
-          to="/dashboard"
-          className="flex shrink-0 items-center gap-2.5 no-underline"
-          aria-label="Wiki RAG home"
-        >
-          <span className="grid size-[29px] shrink-0 place-items-center border border-[var(--terminal-cyan)] font-mono text-[12px] leading-none font-bold tracking-[-1px] text-[var(--terminal-cyan)]">
-            W/
-          </span>
-          <span className="hidden flex-col gap-[3px] whitespace-nowrap min-[520px]:flex">
-            <strong className="font-mono text-[12px] leading-none font-bold tracking-[0.08em] text-[var(--terminal-text)]">
-              WIKI//RAG
-            </strong>
-            <small className="font-mono text-[8px] leading-none tracking-[0.14em] text-[var(--terminal-muted)]">
-              CODE INTELLIGENCE
-            </small>
-          </span>
-        </Link>
-
-        <div className="flex min-w-0 items-center gap-[7px] font-mono text-[10px] leading-none tracking-[0.06em] text-[var(--terminal-muted)]">
-          <Link
-            to="/dashboard/repository"
-            className="shrink-0 text-[var(--terminal-cyan)] no-underline hover:text-[#a5eeee]"
-          >
-            REPOSITORY CONTROL
-          </Link>
-          <span className="text-[var(--terminal-faint)]">/</span>
-          <span className="truncate text-[var(--terminal-text)]">
-            {repoId}
-          </span>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-[14px]">
-        <nav
-          className="flex items-center gap-1 border border-[var(--terminal-rule)] bg-[#0b1114] p-[3px] font-mono text-[9px] leading-none tracking-[0.06em]"
-          aria-label="Workspace navigation"
-        >
-          {appNavLinks.map(({ label, to, icon: Icon }) => {
-            const isActive = location.pathname === to
-            return (
-              <Link
-                key={to}
-                to={to}
-                aria-current={isActive ? "page" : undefined}
-                className={`inline-flex min-h-[24px] items-center gap-[6px] px-2 no-underline transition-colors ${
-                  isActive
-                    ? "bg-[#101a1e] text-[var(--terminal-cyan)]"
-                    : "text-[var(--terminal-muted)] hover:bg-[#0d161a] hover:text-[var(--terminal-text)]"
-                }`}
-              >
-                <Icon size={13} />
-                <span className="hidden min-[480px]:inline">{label}</span>
-              </Link>
-            )
-          })}
-        </nav>
-
-        <button
-          className="relative grid size-[28px] shrink-0 place-items-center border-0 bg-transparent text-[var(--terminal-muted)] transition-colors hover:bg-[var(--terminal-surface-raised)] hover:text-[var(--terminal-text)]"
-          type="button"
-          aria-label="Messages"
-        >
-          <MessageSquareText size={16} />
-          <span className="absolute top-[5px] right-[5px] size-1 rounded-full bg-[var(--terminal-amber)]" />
-        </button>
-
-        <div className="flex items-center gap-2 border-l border-[var(--terminal-rule)] pl-[14px]">
-          <span className="grid size-[26px] place-items-center bg-[var(--terminal-amber)] font-mono text-[10px] leading-none font-bold text-[#101719]">
-            PA
-          </span>
-          <span className="hidden flex-col gap-[3px] min-[380px]:flex">
-            <strong className="font-mono text-[11px] leading-none font-semibold text-[var(--terminal-text)]">
-              pasdigital
-            </strong>
-            <small className="font-mono text-[8px] leading-none tracking-[0.08em] text-[var(--terminal-muted)]">
-              GITHUB
-            </small>
-          </span>
-        </div>
-      </div>
-    </header>
-  )
-}
-
-export function ChatWorkspace({
+export function SessionWorkspace({
   sessionId = "s1",
   repoId = "atlas-core",
 }: {
@@ -222,44 +118,53 @@ export function ChatWorkspace({
 
   return (
     <div className="flex h-svh flex-col overflow-hidden bg-[var(--terminal-bg)] text-[var(--terminal-text)]">
-      <ChatChromeHeader repoId={repoId} />
+      <RepoChromeHeader repoId={repoId} />
 
       <div className="chat-layout min-h-0! flex-1! border-0! max-[760px]:flex! max-[760px]:min-h-0!">
         <aside className="session-sidebar">
           <div className="session-sidebar-top">
             <div>
-              <span className="eyebrow">SESSIONS</span>
-              <strong>04 THREADS</strong>
+              <span className="eyebrow">REPOSITORY TOOLS</span>
+              <strong>STRUCTURE</strong>
             </div>
-            <button
-              className="mini-icon-button"
-              type="button"
-              aria-label="New session"
-            >
-              <Plus size={15} />
-            </button>
+            <FolderTree size={15} className="text-[var(--terminal-cyan)]" />
           </div>
-          <div className="session-list">
-            {sessions.map((session) => (
-              <Link
-                key={session.id}
-                to="/repo/$repoId/session/$sessionId"
-                params={{ repoId, sessionId: session.id }}
-                className={
-                  session.id === sessionId
-                    ? "session-item is-active"
-                    : "session-item"
-                }
+
+          <div className="p-[10px] font-mono text-[10px] leading-[1.7] text-[var(--terminal-muted)]">
+            {folderTree.map((item) => (
+              <div
+                key={item.name}
+                className="flex items-center gap-[6px]"
+                style={{ paddingLeft: item.depth * 10 }}
               >
-                <span className="session-item-indicator" />{" "}
-                <div>
-                  <strong>{session.title}</strong>
-                  <small>{session.time}</small>
-                </div>
-                {session.pinned && <Pin size={13} className="session-pin" />}
-              </Link>
+                {item.type === "dir" ? (
+                  <FolderOpen size={11} className="text-[var(--terminal-cyan)]" />
+                ) : (
+                  <FileCode2 size={11} className="text-[var(--terminal-faint)]" />
+                )}
+                <span className={item.type === "dir" ? "text-[var(--terminal-cyan)]" : ""}>
+                  {item.name}
+                </span>
+              </div>
             ))}
           </div>
+
+          <div className="p-[10px]">
+            <div className="mb-[7px] font-mono text-[9px] tracking-[0.16em] text-[var(--terminal-muted)]">
+              TOOLS
+            </div>
+            {repoTools.map(({ label, icon: Icon }) => (
+              <button
+                key={label}
+                type="button"
+                className="mb-[4px] flex w-full items-center gap-[8px] border border-transparent bg-transparent px-[8px] py-[6px] font-mono text-[9px] tracking-[0.06em] text-[var(--terminal-muted)] transition-colors hover:border-[var(--terminal-rule)] hover:text-[var(--terminal-text)]"
+              >
+                <Icon size={13} />
+                {label}
+              </button>
+            ))}
+          </div>
+
           <div className="session-sidebar-bottom">
             <div className="repo-context">
               <span className="repo-icon">
@@ -287,7 +192,7 @@ export function ChatWorkspace({
         <section className="chat-thread">
           <div className="thread-toolbar">
             <div>
-              <span className="eyebrow">SESSION 01</span>
+              <span className="eyebrow">SESSION {sessionId}</span>
               <h2>trace the auth boundary</h2>
             </div>
             <div className="thread-toolbar-actions">
@@ -416,7 +321,7 @@ export function ChatWorkspace({
               <FileCode2 size={17} />
               <div>
                 <strong>{citation.file}</strong>
-                <small>atlas-core · main</small>
+                <small>{repoId} · main</small>
               </div>
             </div>
             <div className="source-location">
@@ -439,9 +344,4 @@ export function ChatWorkspace({
       </div>
     </div>
   )
-}
-
-export function RepoChatPage() {
-  const { repoId } = useParams({ from: "/protected/repo/$repoId" })
-  return <ChatWorkspace repoId={repoId} />
 }
