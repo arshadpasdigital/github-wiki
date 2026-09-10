@@ -39,6 +39,7 @@ const envSchema = z.object({
 	ACTIVITY_MAX_BATCH: z.coerce.number().int().min(1).default(500),
 	QDRANT_URL:z.string().trim().min(1, "QDRANT_URL is required"),
 	QDRANT_API_KEY: z.string().trim().min(1, "QDRANT_API_KEY is required"),
+	REWRITE_QUERY_LLM:z.string().optional()
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

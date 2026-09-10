@@ -30,7 +30,7 @@ export class MessageRepository implements MessageRepositoryContract {
             ...input,
             sessionId: new Types.ObjectId(input.sessionId),
         });
-    }
+    };
 
     async updateById(
         id: string,
