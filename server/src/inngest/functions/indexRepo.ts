@@ -2,7 +2,6 @@ import { fetchRepo } from "@/shared/config/github";
 import { inngest } from "..";
 import { chunkFiles } from "@/rag/chunking";
 import QdrantVectorStore from "@/shared/config/qdrant";
-import { OpenAIEmbeddings } from "@langchain/openai";
 import { IndexingStatus, RepoModel } from "@/shared/models/repos.model";
 
 const BATCH_SIZE = 25;
@@ -36,12 +35,8 @@ export const indexRepo = inngest.createFunction({
         const filesProcessed = Math.min(files.length, (i + 1) * BATCH_SIZE);
 
         await step.run(`process-batch-${i}`, async () => {
-            const store = new QdrantVectorStore(
-                new OpenAIEmbeddings({ model: "text-embedding-3-large" }),
-                repoKey,
-                3072,
-            );
-            const vectorStore = await store.Connected();
+            const store = new QdrantVectorStore(repoKey);
+            const vectorStore = await store.connect();
             const documents = await chunkFiles(batch, repoName);
             await vectorStore.addDocuments(documents);
 

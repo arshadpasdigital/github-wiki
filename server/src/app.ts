@@ -11,6 +11,8 @@ import taskRouter from "@/services/task/routes/task.routes";
 import repoRouter from "@/services/repo/routes/repo.routes";
 import userRouter from "@/services/user/routes/user.routes";
 import activityRouter from "@/services/activity/routes/activity.routes";
+import sessionRouter from "@/services/session/routes/session.routes";
+import messageRouter from "@/services/message/routes/message.routes";
 import { ApiResponse } from "@/shared/utils/api-response";
 import { pingDatabase } from "@/shared/config/database";
 import { toNodeHandler } from "better-auth/node";
@@ -63,6 +65,8 @@ app.use("/api/v1/tasks", taskRouter);
 app.use("/api/v1/repos", repoRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/activities", activityRouter);
+app.use("/api/v1/session", sessionRouter);
+app.use("/api/v1/messages", messageRouter);
 app.use("/api/inngest", serve({ client: inngest, functions }));
 
 app.get("/health", async (req: Request, res: Response, next: NextFunction) => {

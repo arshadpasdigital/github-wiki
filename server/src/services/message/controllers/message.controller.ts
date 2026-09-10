@@ -6,6 +6,7 @@ import {
 } from "../validation/message.validation";
 import { MessageService } from "../services/message.service";
 import { ApiResponse } from "@/shared/utils/api-response";
+import { inngest } from "@/inngest";
 
 const getMessageId = (value: string | string[] | undefined): string => {
     if (typeof value !== "string" || value.length === 0) {
@@ -32,6 +33,7 @@ export class MessageController {
     readonly createMessage = asyncHandler(async (req, res) => {
         const input = createMessageSchema.parse(req.body);
         const message = await this.messageService.createMessage(input);
+        // await inngest.send("")
         res.status(201).json(ApiResponse.success(message, 201, "create message"));
     });
 

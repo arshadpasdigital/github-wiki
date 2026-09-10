@@ -1,20 +1,22 @@
-import { QdrantVectorStore } from "@langchain/qdrant";
+import { QdrantVectorStore as LangChainQdrantVectorStore } from "@langchain/qdrant";
 import { QdrantClient } from "@qdrant/js-client-rest";
-import type { Embeddings } from "@langchain/core/embeddings";
+import { OpenAIEmbeddings } from "@langchain/openai";
 
-class VectorStore {
-  private instance: QdrantVectorStore | null = null;
+/** The model and vector size must stay aligned with the Qdrant collection. */
+export const EMBEDDING_MODEL = "text-embedding-3-large" as const;
+export const EMBEDDING_VECTOR_SIZE = 3072;
+export const DEFAULT_SEARCH_LIMIT = 4;
 
-  constructor(
-    private readonly embeddings: Embeddings,
-    private readonly collectionName: string,
-    private readonly vectorSize: number = 3072, // text-embedding-3-large outputs 3072 dimensions
-  ) {}
+class QdrantVectorStore {
+  private vectorStore: LangChainQdrantVectorStore | null = null;
+  private readonly embeddings = new OpenAIEmbeddings({ model: EMBEDDING_MODEL });
 
-  async Connected(): Promise<QdrantVectorStore> {
-    // Already connected this run — return the cached instance, don't reconnect
-    if (this.instance) {
-      return this.instance;
+  constructor(private readonly collectionName: string) {}
+
+  /** Connect to the collection, creating it when it does not exist. */
+  async connect(): Promise<LangChainQdrantVectorStore> {
+    if (this.vectorStore) {
+      return this.vectorStore;
     }
 
     const client = new QdrantClient({
@@ -22,26 +24,36 @@ class VectorStore {
       apiKey: process.env.QDRANT_API_KEY,
     });
 
-
     const { collections } = await client.getCollections();
-    const exists = collections.some((c) => c.name === this.collectionName);
+    const collectionExists = collections.some(
+      (collection) => collection.name === this.collectionName,
+    );
 
-    if (!exists) {
+    if (!collectionExists) {
       await client.createCollection(this.collectionName, {
         vectors: {
-          size: this.vectorSize,
+          size: EMBEDDING_VECTOR_SIZE,
           distance: "Cosine",
         },
       });
     }
 
-    this.instance = await QdrantVectorStore.fromExistingCollection(this.embeddings, {
-      client,
-      collectionName: this.collectionName,
-    });
+    this.vectorStore = await LangChainQdrantVectorStore.fromExistingCollection(
+      this.embeddings,
+      {
+        client,
+        collectionName: this.collectionName,
+      },
+    );
 
-    return this.instance;
+    return this.vectorStore;
+  }
+
+  /** Search this repository collection using the same embedding model as indexing. */
+  async vectorSearch(query: string, limit = DEFAULT_SEARCH_LIMIT) {
+    const vectorStore = await this.connect();
+    return vectorStore.similaritySearchWithScore(query, limit);
   }
 }
 
-export default VectorStore;
+export default QdrantVectorStore;
